@@ -115,4 +115,14 @@ curl -X POST http://127.0.0.1:18080/graph \
 Сейчас он намеренно не подключен к основному `/chat`, чтобы demo не зависело от наличия ключа YandexGPT.
 Для проверки интеграции нужно заполнить `YANDEXGPT_FOLDER_ID` и один из секретов: `YANDEXGPT_API_KEY` или `YANDEXGPT_IAM_TOKEN`.
 
+Отдельная NLP-часть лежит в `nlp/`:
+
+```python
+from nlp.extraction import extract_knowledge
+
+result = extract_knowledge("Ti-6Al-4V после закалки показал рост прочности.")
+```
+
+Если YandexGPT не настроен, `nlp.extraction` использует rule-based fallback для демо.
+
 Подробный локальный runbook: `docs/neo4j_runbook.md`.
