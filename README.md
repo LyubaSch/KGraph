@@ -23,7 +23,8 @@
 - `get_subgraph()` для выдачи JSON-compatible подграфа;
 - demo JSON и demo Cypher-запросы.
 
-Модуль не делает semantic search, embeddings, frontend, chat, auth, upload UI, OpenAI agent или RAG.
+Модуль не делает semantic search, embeddings, frontend, chat, auth, upload UI или RAG.
+Экспериментальный NLP/agent pipeline подготовлен под YandexGPT, но не подключен к production `/chat`.
 
 ### Запуск Knowledge Graph
 
@@ -41,6 +42,18 @@ NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_password
 ```
+
+Опционально для будущего NLP/agent pipeline можно добавить YandexGPT:
+
+```env
+YANDEXGPT_FOLDER_ID=your_folder_id
+YANDEXGPT_API_KEY=your_api_key
+# или вместо API key:
+YANDEXGPT_IAM_TOKEN=your_iam_token
+YANDEXGPT_MODEL=yandexgpt-lite/latest
+```
+
+Без этих переменных текущий Neo4j demo, backend и frontend продолжают работать.
 
 Локально Neo4j можно поднять через Docker:
 
@@ -93,5 +106,13 @@ curl -X POST http://127.0.0.1:18080/graph \
 ```
 
 Если Neo4j доступен и demo JSON импортирован, backend вернет `nodes` и `edges` из Neo4j. Если Neo4j недоступен или сущность не найдена, backend автоматически вернет mock graph из `data/graph.json`.
+
+### YandexGPT NLP scaffold
+
+`agent.py` и `prompts.py` содержат экспериментальную заготовку для извлечения сущностей/связей из текста через YandexGPT.
+Этот слой ожидает текстовые чанки, возвращает структурированный JSON и дальше может быть соединен с `kg.importer`.
+
+Сейчас он намеренно не подключен к основному `/chat`, чтобы demo не зависело от наличия ключа YandexGPT.
+Для проверки интеграции нужно заполнить `YANDEXGPT_FOLDER_ID` и один из секретов: `YANDEXGPT_API_KEY` или `YANDEXGPT_IAM_TOKEN`.
 
 Подробный локальный runbook: `docs/neo4j_runbook.md`.

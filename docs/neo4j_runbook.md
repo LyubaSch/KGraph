@@ -70,6 +70,17 @@ If Neo4j is unavailable or the entity is missing, backend falls back to `data/gr
 
 ## 4. What Is Not Connected
 
-`agent.py` and `prompts.py` are experimental extraction scaffolding. They are not connected to `/chat`,
-do not write to Neo4j, and should not be used in the demo path without a separate integration pass.
+`agent.py` and `prompts.py` are experimental YandexGPT extraction scaffolding.
+They are not connected to `/chat`, do not write to Neo4j, and should not be used in the demo path without a separate integration pass.
 
+Optional YandexGPT settings:
+
+```env
+YANDEXGPT_FOLDER_ID=your_folder_id
+YANDEXGPT_API_KEY=your_api_key
+# or:
+YANDEXGPT_IAM_TOKEN=your_iam_token
+YANDEXGPT_MODEL=yandexgpt-lite/latest
+```
+
+The current Neo4j/backend/frontend demo does not require these values.

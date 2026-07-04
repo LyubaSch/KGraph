@@ -100,20 +100,50 @@ def _adapt_neo4j_subgraph(subgraph: dict[str, list[dict[str, Any]]]) -> dict[str
     return {"nodes": nodes, "edges": edges}
 
 
+def _candidate_entity_queries(query: str) -> list[str]:
+    candidates = [query]
+
+    try:
+        from kg.resolver import SYNONYMS, normalize_text
+    except Exception:
+        return candidates
+
+    normalized_query = normalize_text(query)
+    for alias, canonical in SYNONYMS.items():
+        normalized_alias = normalize_text(alias)
+        if not normalized_alias:
+            continue
+
+        if normalized_query == normalized_alias or (
+            len(normalized_alias) > 2 and normalized_alias in normalized_query
+        ):
+            candidates.extend([alias, canonical])
+
+    unique_candidates = []
+    seen = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        unique_candidates.append(candidate)
+    return unique_candidates
+
+
 def _get_neo4j_subgraph(query: str) -> dict[str, list[dict[str, Any]]]:
     from kg.neo4j_client import Neo4jClient
     from kg.queries import get_subgraph as get_kg_subgraph
 
     client = Neo4jClient()
     try:
-        subgraph = get_kg_subgraph(client, query)
+        for candidate in _candidate_entity_queries(query):
+            subgraph = get_kg_subgraph(client, candidate)
+            adapted = _adapt_neo4j_subgraph(subgraph)
+            if adapted["nodes"]:
+                return adapted
     finally:
         client.close()
 
-    adapted = _adapt_neo4j_subgraph(subgraph)
-    if not adapted["nodes"]:
-        raise ValueError(f"Neo4j has no entity for query: {query}")
-    return adapted
+    raise ValueError(f"Neo4j has no entity for query: {query}")
 
 
 def get_subgraph(query: str) -> dict[str, list[dict[str, Any]]]:

@@ -1,6 +1,6 @@
 import json
-import os
 
+from kg.yandexgpt_client import YandexGPTClient, parse_json_response
 from prompts import (
     SYSTEM_PROMPT,
     EXTRACTION_AGENT,
@@ -9,28 +9,17 @@ from prompts import (
     EXPLAIN_EDGE_PROMPT,
 )
 
-try:
-    from openai import OpenAI
-except ImportError:  # pragma: no cover - optional experimental dependency
-    OpenAI = None
-
 
 _client = None
 
 
-def get_openai_client():
+def get_yandexgpt_client():
     global _client
 
     if _client is not None:
         return _client
-    if OpenAI is None:
-        raise RuntimeError("The optional 'openai' package is not installed.")
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set.")
-
-    _client = OpenAI(api_key=api_key)
+    _client = YandexGPTClient()
     return _client
 
 
@@ -39,17 +28,16 @@ def get_openai_client():
 # ─────────────────────────────
 
 def ask_llm(prompt, temperature=0.0):
-    client = get_openai_client()
-    r = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt}
+    client = get_yandexgpt_client()
+    response_text = client.complete(
+        [
+            {"role": "system", "text": SYSTEM_PROMPT},
+            {"role": "user", "text": prompt},
         ],
         temperature=temperature,
-        response_format={"type": "json_object"}
+        max_tokens=3000,
     )
-    return json.loads(r.choices[0].message.content)
+    return parse_json_response(response_text)
 
 
 # ─────────────────────────────
@@ -57,15 +45,22 @@ def ask_llm(prompt, temperature=0.0):
 # ─────────────────────────────
 
 def extract_material_name(query):
-    client = get_openai_client()
-    r = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content":
-            f"Extract material name from query. If none, return null.\n\n{query}"
-        }],
-        temperature=0.0
+    client = get_yandexgpt_client()
+    response_text = client.complete(
+        [
+            {
+                "role": "user",
+                "text": (
+                    "Extract material name from query. If none, return null. "
+                    "Return only the material name or null.\n\n"
+                    f"{query}"
+                ),
+            }
+        ],
+        temperature=0.0,
+        max_tokens=64,
     )
-    out = r.choices[0].message.content.strip()
+    out = response_text.strip().strip('"')
     return None if out.lower() == "null" else out
 
 
