@@ -1,5 +1,6 @@
 import json
-from openai import OpenAI
+import os
+
 from prompts import (
     SYSTEM_PROMPT,
     EXTRACTION_AGENT,
@@ -8,7 +9,29 @@ from prompts import (
     EXPLAIN_EDGE_PROMPT,
 )
 
-client = OpenAI(api_key="sk-...")
+try:
+    from openai import OpenAI
+except ImportError:  # pragma: no cover - optional experimental dependency
+    OpenAI = None
+
+
+_client = None
+
+
+def get_openai_client():
+    global _client
+
+    if _client is not None:
+        return _client
+    if OpenAI is None:
+        raise RuntimeError("The optional 'openai' package is not installed.")
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not set.")
+
+    _client = OpenAI(api_key=api_key)
+    return _client
 
 
 # ─────────────────────────────
@@ -16,6 +39,7 @@ client = OpenAI(api_key="sk-...")
 # ─────────────────────────────
 
 def ask_llm(prompt, temperature=0.0):
+    client = get_openai_client()
     r = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -33,6 +57,7 @@ def ask_llm(prompt, temperature=0.0):
 # ─────────────────────────────
 
 def extract_material_name(query):
+    client = get_openai_client()
     r = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content":

@@ -42,6 +42,12 @@ NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_password
 ```
 
+Локально Neo4j можно поднять через Docker:
+
+```bash
+docker compose -f docker-compose.neo4j.yml up -d
+```
+
 Создать schema и импортировать demo-граф:
 
 ```bash
@@ -51,6 +57,12 @@ python scripts/demo_get_subgraph.py "вещество Б"
 python scripts/demo_get_subgraph.py "Б"
 python scripts/demo_get_subgraph.py "вещество ББ"
 python scripts/demo_get_subgraph.py "Ti-6Al-4V"
+```
+
+Или выполнить полный bootstrap + smoke-test одной командой:
+
+```bash
+python scripts/bootstrap_neo4j.py
 ```
 
 Факты хранятся как обычные ребра с `evidence_type="fact"` и `visual_style="solid"`.
@@ -81,3 +93,5 @@ curl -X POST http://127.0.0.1:18080/graph \
 ```
 
 Если Neo4j доступен и demo JSON импортирован, backend вернет `nodes` и `edges` из Neo4j. Если Neo4j недоступен или сущность не найдена, backend автоматически вернет mock graph из `data/graph.json`.
+
+Подробный локальный runbook: `docs/neo4j_runbook.md`.
